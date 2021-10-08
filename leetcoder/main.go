@@ -45,7 +45,9 @@ func main() {
 var workDir string
 var goland string
 func readCfg() {
-	bs, err := ioutil.ReadFile("config.txt")
+	wd, _ := os.Getwd()
+	wd = strings.Replace(wd, `\`,`/`,-1)
+	bs, err := ioutil.ReadFile(wd+"/leetcoder.config")
 	if err != nil {
 		log.Fatal(err)
 	}
