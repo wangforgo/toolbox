@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+        html {
+            height: 100%
+        }
+        body {
+            margin: 0;
+            height: 100%;
+            background: #fff;
+        }
+        canvas {
+            displa block;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+
+<body>
+
+<canvas id="canvas" width="780px" height="780px"></canvas>
+<div class="ctrl">
+    <div class="">W: Wall, M: MEC, P: Power, D: Device, R: Rack, 1: Play1A, 2: Play1B, 3: Player2A, 4: Player2B</div>
+</div>
+<script>
+    let canvas = document.getElementById('canvas');
+    let ctx = canvas.getContext('2d');
+    let w= 720
+    let h = 720
+
+    let baseOff = 60
+
+    let drawLine = function (x1,y1,x2,y2,color) {
+        ctx.fillStyle = color
+        ctx.beginPath()
+        ctx.moveTo(x1,y1);
+        ctx.lineTo(x2,y2);
+        ctx.stroke();
+        ctx.fillStyle = "black"
+    }
+
+    let drawLetter = function (x,y,color, letter) {
+        ctx.font.textAlign = "center";
+        ctx.font="30px Arial";
+        xPos = x + 15;
+        yPos = y + 45;
+        if ( letter.length === 2 ) {
+            ctx.font="20px Arial";
+
+            xPos = x + 10;
+            yPos = y + 40;
+        }
+
+        ctx.fillStyle = color
+        ctx.fillText(letter, xPos, yPos);
+        ctx.fillStyle = "black"
+    }
+
+    for (var i=0;i<=12;i++) {
+        var x = i*60
+        drawLine(baseOff+x,baseOff+0,baseOff+x,baseOff+h,"grey")
+        drawLine(baseOff+0,baseOff+x,baseOff+w,baseOff+x,"grey")
+        if (i!=12){
+            drawLetter(i*60+baseOff,0,"grey",i)
+            drawLetter(0,i*60+baseOff,"grey",i)
+        }
+    }
+
+    data = [
+        [0,7,"1"],
+        [1,8,"2"],
+        [10,3,"3"],
+        [11,4,"4"],
+        [5,0,"W"],
+        [5,1,"W"],
+        [5,2,"W"],
+        [5,3,"W"],
+        [5,4,"W"],
+        [5,6,"W"],
+        [5,7,"W"],
+        [5,8,"W"],
+        [5,9,"W"],
+        [5,10,"W"],
+        [5,11,"W"],
+
+        [4,0,"D"],
+        [1,1,"M"],
+        [2,10,"P"],
+        [4,8,"D"],
+        [4,9,"R"],
+    ]
+
+    // draw units
+    for (var i=0;i<data.length;i++) {
+        var x = data[i][0] * 60 + baseOff
+        var y = data[i][1] * 60 + baseOff
+        drawLetter(x,y,"", data[i][2])
+    }
+
+    // draw Path
+
+
+
+
+    let drawArrowWithIndex = function (ctx,x1,y1,x2,y2,color,dash) {
+        drawArrow(ctx,x1*60+baseOff+30,y1*60+baseOff+30,x2*60+baseOff+30,y2*60+baseOff+30,30,10,3,color,dash)
+    }
+    function drawArrow(ctx, fromX, fromY, toX, toY,theta,headlen,width,color,dash) {
+
+        theta = typeof(theta) != 'undefined' ? theta : 30;
+        headlen = typeof(theta) != 'undefined' ? headlen : 10;
+        width = typeof(width) != 'undefined' ? width : 1;
+        color = typeof(color) != 'color' ? color : '#000';
+
+        // 计算各角度和对应的P2,P3坐标
+        var angle = Math.atan2(fromY - toY, fromX - toX) * 180 / Math.PI,
+            angle1 = (angle + theta) * Math.PI / 180,
+            angle2 = (angle - theta) * Math.PI / 180,
+            topX = headlen * Math.cos(angle1),
+            topY = headlen * Math.sin(angle1),
+            botX = headlen * Math.cos(angle2),
+            botY = headlen * Math.sin(angle2);
+
+        ctx.save();
+        ctx.beginPath();
+
+        var arrowX = fromX - topX,
+            arrowY = fromY - topY;
+
+        if (dash === 1) {
+            ctx.setLineDash([5,1])
+        }
+
+        ctx.moveTo(arrowX, arrowY);
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
+        arrowX = toX + topX;
+        arrowY = toY + topY;
+        ctx.moveTo(arrowX, arrowY);
+        ctx.lineTo(toX, toY);
+        arrowX = toX + botX;
+        arrowY = toY + botY;
+        ctx.lineTo(arrowX, arrowY);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.stroke();
+        ctx.restore();
+    }
+
+
+    var actions = [
+        {
+            id:1,
+            cur: [0,7],
+            steps: [
+                [1,6,"Move"],
+                [2,5,"Move"],
+                [3,4,"Move"],
+                [4,3,"Move"],
+                [4,2,"Move"],
+                [4,1,"Move"],
+                [4,0,"Put"],
+            ],
+        },
+        {
+            id:2,
+            cur: [1,8],
+            steps: [
+                [2,9,"Move"],
+            ],
+        },
+    ]
+
+    var color;
+    var steps;
+    for (i = 0; i < actions.length; i++) {
+        cc = [255,0,0]
+        if (actions[i].id === 2) {
+            cc[0] = 0
+            cc[2] = 255
+        }
+
+        steps = actions[i].steps
+        let x1, x2, y1, y2;
+        x1 = actions[i].cur[0]
+        y1 = actions[i].cur[1]
+
+        for (let j = 0; j < steps.length; j++) {
+            color = 'rgb('+cc[0]+','+cc[1]+','+cc[2]+')'
+            console.log(color);
+            x2 = steps[j][0]
+            y2 = steps[j][1]
+
+            let dash = 0
+            if ( steps[j][2] === "Put" ) {
+                dash = 1
+            }
+            drawArrowWithIndex(ctx, x1, y1, x2, y2, color,dash)
+
+
+            x1 = x2
+            y1 = y2
+            // gradient color
+            // for (let k =0;k<3;k++) {
+            //     if (cc[k] < 255 ) {
+            //         cc[k] += 30
+            //     }
+            // }
+        }
+    }
+</script>
+</body>
+</html>
